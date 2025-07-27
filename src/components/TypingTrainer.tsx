@@ -12,15 +12,21 @@ import {
 } from "@mui/material";
 import { calculateWPM } from "../utils/wpm";
 
-const TEXT_TO_TYPE = "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet and is perfect for typing practice.";
-
 export default function TypingTrainer() {
+  const [textToType, setTextToType] = useState("");
   const [input, setInput] = useState("");
   const [startTime, setStartTime] = useState<number | null>(null);
   const [wpm, setWpm] = useState(0);
   const [accuracy, setAccuracy] = useState(100);
   const [isCompleted, setIsCompleted] = useState(false);
 
+  useEffect(() => {
+    // Fetch initial text to type
+    fetch("http://localhost:8000/paragraph")
+      .then(res => res.json())
+      .then(data => setTextToType(data.text))
+      .catch(err => console.error("Error fetching text:", err));
+  }, []);
   useEffect(() => {
     if (startTime && input.length > 0) {
       const elapsed = (Date.now() - startTime) / 1000;
@@ -29,17 +35,16 @@ export default function TypingTrainer() {
       
       // Calculate accuracy
       const correctChars = input.split('').filter((char, index) => 
-        char === TEXT_TO_TYPE[index]
+        char === textToType[index]
       ).length;
       const currentAccuracy = input.length > 0 ? (correctChars / input.length) * 100 : 100;
       setAccuracy(Math.round(currentAccuracy));
 
       // Check if completed
-      if (input === TEXT_TO_TYPE) {
+      if (input === textToType) {
         setIsCompleted(true);
       }
-    }
-  }, [input, startTime]);
+  }}, [input, startTime, textToType]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!startTime) setStartTime(Date.now());
@@ -54,11 +59,11 @@ export default function TypingTrainer() {
     setIsCompleted(false);
   };
 
-  const progress = (input.length / TEXT_TO_TYPE.length) * 100;
+  const progress = (input.length / textToType.length) * 100;
 
   // Render text with correct/incorrect highlighting
   const renderTextWithHighlight = () => {
-    return TEXT_TO_TYPE.split('').map((char, index) => {
+    return textToType.split('').map((char, index) => {
       const color = 'text.primary';
       let backgroundColor = 'transparent';
       
@@ -178,7 +183,7 @@ export default function TypingTrainer() {
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
             <Typography variant="caption" color="text.secondary">
-              Characters: {input.length} / {TEXT_TO_TYPE.length}
+              Characters: {input.length} / {textToType.length}
             </Typography>
           </Box>
           <Button 
